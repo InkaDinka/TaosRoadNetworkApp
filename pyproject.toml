@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "python-notebook-template"
+version = "0.1.0"
+description = "Dependencies for codespace."
+authors = ["Zach Jeantete"]
+license = "MIT"
+packages = [{include = "python_notebook_templete"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+jupyter = "^1.0.0"
+neo4j = "^5.6.0"
+osmnx = "1.3.0"
+python-dotenv = "1.0.1"
+
+[tool.poetry.group.dev.dependencies]
+poetry-dotenv-plugin = "^0.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

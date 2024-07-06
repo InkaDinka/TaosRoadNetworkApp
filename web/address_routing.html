@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taos GPS</title>
+
+    <!-- leaflet package. The integrity it to ensure the package resource has not been maliciously changed-->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+
+     <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+
+    <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <script src="https://unpkg.com/neo4j-driver"></script>
+
+    <style>
+        /* Sets the size of the map */
+        #map {
+            height: 750px;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font: 16px Arial;
+        }
+        .autocomplete {
+            position: relative;
+            display: inline-block;
+        }
+        input {
+            /* Sets border of form elements upon select and unselect. */
+            border: 1px solid transparent;
+            /* Sets size of form input boxes. */
+            padding: 10px;
+            font-size: 16px;
+        }
+        input[type="text"] {
+            background-color: #f1f1f1;
+            width: 100%;
+        }
+        input[type="submit"] {
+            background-color: mediumslateblue;
+            color: #fff;
+        }
+    </style>
+
+    <div id="map"></div>
+
+</head>
+<body>
+    <form id="routeForm" autocomplete="on">
+        <div class="autocomplete" style="width: 300px">
+            <input id="source" type="text" name="source" placeholder="From" />
+            <input id="dest" type="text" name="dest" placeholder="To" />
+        </div>
+        <input id="routeButton" type="submit" value="Route" />
+    </form>
+
+    <script>
+        //Global variables to set from fetch.
+            let driver;
+            let NEO4J_PASSWORD;
+            let NEO4J_URI;
+            let NEO4J_USER;
+
+        async function fetchData(){
+            try {
+            //Must be set in cors mode and allow credentials to avoid cors errors. 
+                const response = await fetch('https://fluffy-telegram-wr77gxwv66pg35r64-3000.app.github.dev/data', {mode: 'cors', credentials: 'include'});
+
+                if(!response.ok){
+                    throw new Error("Failed to fetch resource");
+                }
+            //Converts response from fetch into json where credentials can be assigned.
+                const data = await response.json();
+                NEO4J_PASSWORD = data.secret_p;
+                NEO4J_URI = data.secret_u;
+                NEO4J_USER = data.secret_user;
+
+                driver = neo4j.driver(NEO4J_URI, neo4j.auth.basic(NEO4J_USER, NEO4J_PASSWORD));
+
+                setup(driver);
+            }
+            catch(error){
+                console.error(error);
+            }
+        }
+            
+        fetchData();
+
+        function setup(driver){
+        //Initializes map at the coordinates of Taos, NM
+            var map = L.map('map').setView([36.391686, -105.58258], 13);
+                
+            //Uses the tiles from openstreetmap and adds them to the map.
+            const tiles = L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                            {
+                                maxZoom: 19,
+                                attribution: 
+                                    '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                            }
+                        ).addTo(map);
+            
+            // Event listener for form submission
+            document.getElementById('routeForm').addEventListener('submit', function(e) {
+            //Allows for javascript to handle the submit event instead of refreshing the page.
+                e.preventDefault();
+                //Selects the input of the source (From) location 
+                const source = document.getElementById('source').value;
+                console.log(source);
+                //Selects the input of the source (To) location 
+                const destination = document.getElementById('dest').value;
+                console.log(destination);
+                // Call function to get route
+                getRoute(driver, source, destination);
+                //Resets routeForm after submission.
+                document.getElementById('routeForm').reset();
+            });
+            
+            let currentPolylines = null
+            let currentMarkers = []
+
+            function getRoute(driver, source, dest) {
+                //Removes previous layer if it exists.
+                    if(currentPolylines) {
+                        map.removeLayer(currentPolylines);
+                    }
+                //Removes previous markers from previous route submissions.
+                    currentMarkers.forEach(marker => map.removeLayer(marker));
+                    currentMarkers = [];
+
+                //Creates a driver session in READ mode to query database.
+                    var session = driver.session({
+                        database: "neo4j",
+                        defaultAccessMode: neo4j.session.READ,
+                    });
+
+                    const routeQuery = `
+                        //$source will be passed as the "From" attribute from the form as the full_address.
+                        MATCH (to {full_address: $source})-[:NEAREST_INTERSECTION]->(source:Intersection) 
+                        //$dest will be passed as the "To" attribute from the form as the full_address.
+                        MATCH (from {full_address: $dest})-[:NEAREST_INTERSECTION]->(target:Intersection) 
+                        CALL apoc.algo.dijkstra(source, target, "ROAD_SEGMENT", "length") YIELD path, weight 
+                        //Returns an array of coordinates from the intersection nodes that make up the path.
+                        RETURN [n in nodes(path) | [n.location.latitude, n.location.longitude]] AS route
+                        `;
+                
+                    var session = driver.session({
+                        database: "neo4j",
+                        defaultAccessMode: neo4j.session.READ,
+                    });
+                    //Creates a polyline based on the route coordinates returned from the query using the dijkstra function
+                    session.run(routeQuery, { source, dest }).then((routeResult) => {
+                            routeResult.records.forEach((routeRecord) => {
+                                const routeCoords = routeRecord.get("route");
+                    //Updates polyline variable so that the map is updated each time a new route form is submitted.
+                                currentPolylines = L.polyline(routeCoords)
+                                    .setStyle({ color: "magenta", weight: 8 })
+                                    .addTo(map);
+
+                                    console.log(routeCoords[0])
+                                    console.log(routeCoords[routeCoords.length-1])
+                    //Fetches the first node of the route as the start and last node of the route as the end.
+                                    var corner1 = L.latLng(routeCoords[0][0], routeCoords[0][1]),
+                                    corner2 = L.latLng(routeCoords[routeCoords.length-1][0], routeCoords[routeCoords.length-1][1])
+                    //Creates new markers for new route indicating start and end.
+                                    const start = L.marker(corner1).addTo(map).bindPopup(source).openPopup();
+                                    const end = L.marker(corner2).addTo(map).bindPopup(dest).openPopup();
+                                    currentMarkers.push(start, end);
+
+                            });
+                        })
+                        .catch((error) =>{
+                            console.log(error);
+                        })
+                        .then(() => {
+                            session.close();
+                        });
+            
+            }
+        }
+
+    </script>
+</body>
+</html>
