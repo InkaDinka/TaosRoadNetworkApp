@@ -74,7 +74,7 @@
             try {
             //Must be set in cors mode and allow credentials to avoid cors errors. 
                 const response = await fetch('https://laughing-spork-v6vvqwxp494jhp545-3000.app.github.dev/data', {mode: 'cors', credentials: 'include'});
-// https://laughing-spork-v6vvqwxp494jhp545.github.dev-3000.app.github.dev/data
+                
                 if(!response.ok){
                     throw new Error("Failed to fetch resource");
                 }
