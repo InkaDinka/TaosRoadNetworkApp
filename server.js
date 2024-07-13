@@ -4,7 +4,7 @@ const app = express();
 const PORT = 3000;
 
 //Define CORS options (since the origin is localhost for client and server side Access-Control-Allow-Origin header must be the site that's calling for data.)
-app.use(cors({credentials: true, origin: 'https://cautious-tribble-x5wwvxjr679pf6qwp-8000.app.github.dev'}));
+app.use(cors({credentials: true, origin: 'https://laughing-spork-v6vvqwxp494jhp545-8000.app.github.dev'}));
 
 app.use(express.json())
 //Accessing repository environment variables
