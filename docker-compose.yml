@@ -1,38 +1,15 @@
 services:
 #Server is the name of the service or job.
-  server:
+  web:
     build:
 #builds a docker image in the found docker file in the current directory.
       context: .
-      dockerfile: Dockerfile.server
-
-    #Environment variables from secrets for script access.
-    environment:
-      - NEO4J_URI=${NEO4J_URI}
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
-      - NEO4J_USER=${NEO4J_USER}
+      dockerfile: Dockerfile
 #Maps current directory to /app in docker file container.
     volumes: 
       - .:/app
 #Command to run when running docker image.
-    command: node server.js
-#Maps port to flask app.
-    ports:
-      - 3000:3000
-
-#Web is the name of the service or job.
-  web:
-    build:
-      context: .
-      dockerfile: Dockerfile.pyscript
-#Environment variables from secrets for script access.
-    environment:
-      - NEO4J_URI=${NEO4J_URI}
-      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
-      - NEO4J_USER=${NEO4J_USER}
-    volumes:
-      - .:/app
     command: python -m http.server
-    
+#Maps port to flask app.
     ports:
       - 8000:8000
