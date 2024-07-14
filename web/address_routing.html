@@ -45,6 +45,24 @@
             background-color: #f1f1f1;
             width: 100%;
         }
+        li {
+            list-style: none;
+        }
+        .list {
+            border: 1px solid transparent;
+            /* Sets size of form input boxes. */
+            padding: 10px;
+            font-size: 16px;
+        }
+        .list-items {
+            border: 1px solid transparent;
+            /* Sets size of form input boxes. */
+            padding: 10px;
+            font-size: 16px;
+        }
+        .list-items:hover {
+            background-color: #dddddd;
+        }
         input[type="submit"] {
             background-color: mediumslateblue;
             color: #fff;
@@ -55,7 +73,7 @@
 
 </head>
 <body>
-    <form id="routeForm" autocomplete="on">
+    <form id="routeForm" autocomplete="off">
         <div class="autocomplete" style="width: 300px">
             <input id="source" type="text" name="source" placeholder="From" />
             <input id="dest" type="text" name="dest" placeholder="To" />
@@ -67,6 +85,82 @@
 
         driver = neo4j.driver("neo4j+s://4a8a0d17.databases.neo4j.io", neo4j.auth.basic("neo4j", "J065QWWYW4Y3Mjc-Vozijb1V6A5kkwxC_a-zYskPCho"));
 
+        function autocomplete(inputID) {
+            let arr = []
+            let fdata = document.getElementById(inputID);
+            var session = driver.session()
+
+            session.run('CALL db.index.fulltext.queryNodes("search_index", $searchString) YIELD node, score RETURN coalesce(node.name, node.full_address) AS value, score, labels(node)[0] AS label, node.id AS id ORDER BY score DESC LIMIT 25', { searchString: fdata.value })
+            .then((result) => {
+                result.records.forEach((record) => {
+                    const address = {
+                        address: record.get("value"),
+                        score: record.get("score")
+                    };
+                    arr.push(address);
+                    arr.sort((a, b) => b.score - a.score);
+                });
+
+            });
+            fdata.addEventListener("keyup", (e) => {
+                removeElements();
+                for(let i of arr) {
+                    
+                    if(i.address.toLowerCase().startsWith(fdata.value.toLowerCase()) && fdata.value != null){
+                        let listItem = document.createElement("li");
+                        listItem.classList.add("list-items");
+                        listItem.style.cursor = "pointer";
+                        listItem.setAttribute("onclick", "displayNames('" + inputID + "', '" + i.address + "')");
+
+                        let word = "<b>" + i.address.substr(0, fdata.value.length) + "</b>";
+                        word += i.address.substr(fdata.value.length);
+                        console.log(word); 
+
+                        listItem.innerHTML = word;
+                        document.querySelector(".autocomplete").appendChild(listItem);
+                    }
+                }
+            });
+        }
+
+        function displayNames(ID, address){
+            element = document.getElementById(ID);
+            element.value = address;
+            removeElements();
+        }
+        function removeElements(){
+            let items = document.querySelectorAll(".list-items");
+            items.forEach((item) => {
+                item.remove();
+            });
+        }
+
+        document.getElementById('source').addEventListener('input', function(e) {
+            autocomplete("source");
+        });
+        document.getElementById('dest').addEventListener('input', function(e) {
+            autocomplete("dest");
+        });
+        // Event listener for form submission
+        document.getElementById('routeForm').addEventListener('submit', function(e) {
+        //Allows for javascript to handle the submit event instead of refreshing the page.
+            e.preventDefault();
+
+            //Selects the input of the source (From) location 
+            const source = document.getElementById('source').value;
+           
+            //Selects the input of the source (To) location 
+            const destination = document.getElementById('dest').value;
+     
+            // Call function to get route
+            getRoute(driver, source, destination);
+            //Resets routeForm after submission.
+            document.getElementById('routeForm').reset();
+
+        });
+        </script>
+
+        <script>
         //Initializes map at the coordinates of Taos, NM
         var map = L.map('map').setView([36.391686, -105.58258], 13);
             
@@ -78,23 +172,7 @@
                                 '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
                         }
                     ).addTo(map);
-        
-        // Event listener for form submission
-        document.getElementById('routeForm').addEventListener('submit', function(e) {
-        //Allows for javascript to handle the submit event instead of refreshing the page.
-            e.preventDefault();
-            //Selects the input of the source (From) location 
-            const source = document.getElementById('source').value;
-            console.log(source);
-            //Selects the input of the source (To) location 
-            const destination = document.getElementById('dest').value;
-            console.log(destination);
-            // Call function to get route
-            getRoute(driver, source, destination);
-            //Resets routeForm after submission.
-            document.getElementById('routeForm').reset();
-        });
-        
+
         let currentPolylines = null
         let currentMarkers = []
 
