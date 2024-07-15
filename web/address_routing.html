@@ -48,6 +48,13 @@
         li {
             list-style: none;
         }
+        .message {
+            border: 1px solid transparent;
+            /* Sets size of form input boxes. */
+            padding: 15px;
+            font-size: 16px;
+            color:mediumslateblue;;
+        }
         .list {
             border: 1px solid transparent;
             /* Sets size of form input boxes. */
@@ -81,6 +88,8 @@
         <input id="routeButton" type="submit" value="Route" />
     </form>
 
+    <div id="noRoute"></div>
+
     <script>
 
         driver = neo4j.driver("neo4j+s://4a8a0d17.databases.neo4j.io", neo4j.auth.basic("neo4j", "J065QWWYW4Y3Mjc-Vozijb1V6A5kkwxC_a-zYskPCho"));
@@ -103,7 +112,7 @@
 
             });
             fdata.addEventListener("keyup", (e) => {
-                removeElements();
+                removeAutoElements();
                 for(let i of arr) {
                     
                     if(i.address.toLowerCase().startsWith(fdata.value.toLowerCase()) && fdata.value != null){
@@ -114,7 +123,6 @@
 
                         let word = "<b>" + i.address.substr(0, fdata.value.length) + "</b>";
                         word += i.address.substr(fdata.value.length);
-                        console.log(word); 
 
                         listItem.innerHTML = word;
                         document.querySelector(".autocomplete").appendChild(listItem);
@@ -126,9 +134,9 @@
         function displayNames(ID, address){
             element = document.getElementById(ID);
             element.value = address;
-            removeElements();
+            removeAutoElements();
         }
-        function removeElements(){
+        function removeAutoElements(){
             let items = document.querySelectorAll(".list-items");
             items.forEach((item) => {
                 item.remove();
@@ -207,23 +215,41 @@
                 });
                 //Creates a polyline based on the route coordinates returned from the query using the dijkstra function
                 session.run(routeQuery, { source, dest }).then((routeResult) => {
+                        if(routeResult.records.length == 0)
+                        {
+                            let noRoute = document.createElement("div");
+                            let message = document.createTextNode("No Route Between Locations");
+
+                            noRoute.classList.add("message");
+                            noRoute.id = "noRouteMessage";
+                            noRoute.appendChild(message);
+
+                            let currentDiv = document.getElementById("noRoute");
+                            document.body.insertBefore(noRoute, currentDiv);
+                        }
+                        else {
+                            let item = document.getElementById("noRouteMessage");
+                            if(item){
+                                item.remove();
+                            }
+                        }
                         routeResult.records.forEach((routeRecord) => {
-                            const routeCoords = routeRecord.get("route");
-                //Updates polyline variable so that the map is updated each time a new route form is submitted.
-                            currentPolylines = L.polyline(routeCoords)
-                                .setStyle({ color: "magenta", weight: 8 })
-                                .addTo(map);
+                        const routeCoords = routeRecord.get("route");
+                    //Updates polyline variable so that the map is updated each time a new route form is submitted.
+                                currentPolylines = L.polyline(routeCoords)
+                                    .setStyle({ color: "magenta", weight: 8 })
+                                    .addTo(map);
 
-                                console.log(routeCoords[0])
-                                console.log(routeCoords[routeCoords.length-1])
-                //Fetches the first node of the route as the start and last node of the route as the end.
-                                var corner1 = L.latLng(routeCoords[0][0], routeCoords[0][1]),
-                                corner2 = L.latLng(routeCoords[routeCoords.length-1][0], routeCoords[routeCoords.length-1][1])
-                //Creates new markers for new route indicating start and end.
-                                const start = L.marker(corner1).addTo(map).bindPopup(source).openPopup();
-                                const end = L.marker(corner2).addTo(map).bindPopup(dest).openPopup();
-                                currentMarkers.push(start, end);
-
+                                // console.log(routeCoords[0])
+                                // console.log(routeCoords[routeCoords.length-1])
+                    //Fetches the first node of the route as the start and last node of the route as the end.
+                                    var corner1 = L.latLng(routeCoords[0][0], routeCoords[0][1]),
+                                    corner2 = L.latLng(routeCoords[routeCoords.length-1][0], routeCoords[routeCoords.length-1][1])
+                    //Creates new markers for new route indicating start and end.
+                                    const start = L.marker(corner1).addTo(map).bindPopup(source).openPopup();
+                                    const end = L.marker(corner2).addTo(map).bindPopup(dest).openPopup();
+                                    currentMarkers.push(start, end);
+                            
                         });
                     })
                     .catch((error) =>{
