@@ -22,7 +22,8 @@
     <style>
         /* Sets the size of the map */
         #map {
-            height: 750px;
+            height: 600px;
+            
         }
         * {
             box-sizing: border-box;
@@ -85,7 +86,9 @@
             <input id="source" type="text" name="source" placeholder="From" />
             <input id="dest" type="text" name="dest" placeholder="To" />
         </div>
-        <input id="routeButton" type="submit" value="Route" />
+        <div>
+            <input id="routeButton" type="submit" value="Route" />
+        </div>
     </form>
 
     <div id="noRoute"></div>
@@ -106,11 +109,14 @@
                         address: record.get("value"),
                         score: record.get("score")
                     };
-                    arr.push(address);
-                    arr.sort((a, b) => b.score - a.score);
+                    if(address.address.includes("TAOS")){
+                        arr.push(address);
+                        arr.sort((a, b) => b.score - a.score);
+                    }
                 });
 
             });
+            
             fdata.addEventListener("keyup", (e) => {
                 removeAutoElements();
                 for(let i of arr) {
@@ -217,6 +223,10 @@
                 session.run(routeQuery, { source, dest }).then((routeResult) => {
                         if(routeResult.records.length == 0)
                         {
+                            let item = document.getElementById("noRouteMessage");
+                            if(item){
+                                item.remove();
+                            }
                             let noRoute = document.createElement("div");
                             let message = document.createTextNode("No Route Between Locations");
 
