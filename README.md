@@ -2,6 +2,10 @@ This web application represents Taos, New Mexico in a road network stored in a n
 
 Accessable at this link: https://trn-74bjuhpi6q-uc.a.run.app
 
+Test its functionality by submitting these addresses:
+From: 343 SIERRA VISTA LN TAOS, NM 87571
+To: 343 JARAMILLO RD TAOS, NM 87571
+
 Steps to run in codespace:
 1. Create a codespace and wait for codespace to recognize poetry file and install notebook dependencies.
 2. Run docker-compose up.
