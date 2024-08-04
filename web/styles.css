@@ -1,0 +1,55 @@
+/* Sets the size of the map */
+#map {
+    height: 600px;
+    
+}
+* {
+    box-sizing: border-box;
+}
+body {
+    font: 16px Arial;
+}
+.autocomplete {
+    position: relative;
+    display: inline-block;
+}
+input {
+    /* Sets border of form elements upon select and unselect. */
+    border: 1px solid transparent;
+    /* Sets size of form input boxes. */
+    padding: 10px;
+    font-size: 16px;
+}
+input[type="text"] {
+    background-color: #f1f1f1;
+    width: 100%;
+}
+li {
+    list-style: none;
+}
+.message {
+    border: 1px solid transparent;
+    /* Sets size of form input boxes. */
+    padding: 15px;
+    font-size: 16px;
+    color:mediumslateblue;;
+}
+.list {
+    border: 1px solid transparent;
+    /* Sets size of form input boxes. */
+    padding: 10px;
+    font-size: 16px;
+}
+.list-items {
+    border: 1px solid transparent;
+    /* Sets size of form input boxes. */
+    padding: 10px;
+    font-size: 16px;
+}
+.list-items:hover {
+    background-color: #dddddd;
+}
+input[type="submit"] {
+    background-color: mediumslateblue;
+    color: #fff;
+}

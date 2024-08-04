@@ -8,6 +8,7 @@ services:
 #Maps current directory to /app in docker file container.
     volumes: 
       - .:/app
+<<<<<<< HEAD
 #Needed to map docker port to flask app port
     ports:
       - 8080:8080
@@ -15,3 +16,10 @@ services:
     command: python server.py
 
 
+=======
+#Command to run when running docker image.
+    command: python -m http.server
+#Maps port to flask app.
+    ports:
+      - 8000:8000
+>>>>>>> d6e93abfcb8f6e52c5e4869e1c6b70ae149e936d

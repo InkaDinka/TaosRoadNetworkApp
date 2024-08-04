@@ -1,5 +1,9 @@
 /README.txt
 /node_modules
 /poetry.lock
+<<<<<<< HEAD
 /notebooks/cache
 /.env
+=======
+/notebooks/cache
+>>>>>>> d6e93abfcb8f6e52c5e4869e1c6b70ae149e936d
