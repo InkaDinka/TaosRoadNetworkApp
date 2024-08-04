@@ -1,0 +1,17 @@
+services:
+#Server is the name of the service or job.
+  web:
+    build:
+#builds a docker image in the found docker file in the current directory.
+      context: .
+      dockerfile: Dockerfile
+#Maps current directory to /app in docker file container.
+    volumes: 
+      - .:/app
+#Needed to map docker port to flask app port
+    ports:
+      - 8080:8080
+#Command to run when running docker image.
+    command: python server.py
+
+
