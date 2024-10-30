@@ -1,5 +1,5 @@
 
-driver = neo4j.driver("neo4j+s://4a8a0d17.databases.neo4j.io", neo4j.auth.basic("neo4j", "J065QWWYW4Y3Mjc-Vozijb1V6A5kkwxC_a-zYskPCho"));
+driver = neo4j.driver("neo4j+s://1f724fe9.databases.neo4j.io", neo4j.auth.basic("neo4j", "MSwi-gYFniNhJ-ccPKnTS7dZnv0qh20N02XwCRaiLlc"));
 
 function autocomplete(inputID) {
     let arr = []
